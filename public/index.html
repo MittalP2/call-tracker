@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Call Time Tracker - Server Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        input, select, textarea {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            opacity: 0.9;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #dc3545;
+            color: white;
+        }
+
+        .action-btn:hover {
+            background: #c82333;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .alert {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .client-breakdown {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .client-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .client-badge .client-name {
+            font-weight: 600;
+        }
+
+        .client-badge .client-time {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+
+        .pivot-row {
+            transition: background 0.2s;
+        }
+
+        .pivot-row:hover {
+            background: #f0f7ff !important;
+        }
+
+        .pivot-row td {
+            vertical-align: middle;
+        }
+
+        .pivot-total {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🕒 Developer Call Time Tracker</h1>
+            <p>Track support calls and client interactions - Server Edition</p>
+            <span class="badge">🌐 Real-time Shared Database</span>
+        </div>
+
+        <div class="content">
+            <!-- Add New Entry Section -->
+            <div class="section">
+                <h2 class="section-title">Add New Call Entry</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Developer Name *</label>
+                        <select id="developerName">
+                            <option value="">Select Developer</option>
+                            <option value="Aman Diwakar">Aman Diwakar</option>
+                            <option value="Amer Javaid">Amer Javaid</option>
+                            <option value="Bhavani">Bhavani</option>
+                            <option value="Igor Rass">Igor Rass</option>
+                            <option value="Jatin Ahir">Jatin Ahir</option>
+                            <option value="Karol Suchecki">Karol Suchecki</option>
+                            <option value="Lukasz Pazgan">Lukasz Pazgan</option>
+                            <option value="Michael Boutros">Michael Boutros</option>
+                            <option value="Monal Shah">Monal Shah</option>
+                            <option value="SatyaPriya Tarania">SatyaPriya Tarania</option>
+                            <option value="Thanalakshmi Selvaraj">Thanalakshmi Selvaraj</option>
+                            <option value="Umang Patel">Umang Patel</option>
+                            <option value="Xi Yuan">Xi Yuan</option>
+                            <option value="Yuriy Kaufman">Yuriy Kaufman</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Client Name *</label>
+                        <select id="clientName">
+                            <option value="">Select Client</option>
+                            <option value="Aldermore">Aldermore</option>
+                            <option value="Ally Bank">Ally Bank</option>
+                            <option value="American Express">American Express</option>
+                            <option value="ANZ">ANZ</option>
+                            <option value="AT&T">AT&T</option>
+                            <option value="Bank of America">Bank of America</option>
+                            <option value="Barclays">Barclays</option>
+                            <option value="BMO">BMO</option>
+                            <option value="BMW China">BMW China</option>
+                            <option value="BMW Europe">BMW Europe</option>
+                            <option value="BMW US">BMW US</option>
+                            <option value="BNZ">BNZ</option>
+                            <option value="BOQ">BOQ</option>
+                            <option value="Charter Communications">Charter Communications</option>
+                            <option value="Citizens Bank">Citizens Bank</option>
+                            <option value="Citi Ireland">Citi Ireland</option>
+                            <option value="Citi UK">Citi UK</option>
+                            <option value="Close Brothers">Close Brothers</option>
+                            <option value="Coventry">Coventry</option>
+                            <option value="Daimler Truck US">Daimler Truck US</option>
+                            <option value="Dell">Dell</option>
+                            <option value="DLL">DLL</option>
+                            <option value="Dynamoney">Dynamoney</option>
+                            <option value="Element">Element</option>
+                            <option value="Enterprise">Enterprise</option>
+                            <option value="First Help">First Help</option>
+                            <option value="First National Bank of Omaha">First National Bank of Omaha</option>
+                            <option value="FirstRand Bank">FirstRand Bank</option>
+                            <option value="Ford">Ford</option>
+                            <option value="GMF Mexico">GMF Mexico</option>
+                            <option value="GMF US (Retail and Lease)">GMF US (Retail and Lease)</option>
+                            <option value="Harley Davidson">Harley Davidson</option>
+                            <option value="Haventree">Haventree</option>
+                            <option value="Hewlett Packard">Hewlett Packard</option>
+                            <option value="Hiltermann">Hiltermann</option>
+                            <option value="Holman">Holman</option>
+                            <option value="HSBC UK">HSBC UK</option>
+                            <option value="Humm">Humm</option>
+                            <option value="Hyundai">Hyundai</option>
+                            <option value="Internal">Internal</option>
+                            <option value="John Deere">John Deere</option>
+                            <option value="JP Morgan">JP Morgan</option>
+                            <option value="Latitude">Latitude</option>
+                            <option value="Lendmark">Lendmark</option>
+                            <option value="Lobel">Lobel</option>
+                            <option value="Mercedes Australia">Mercedes Australia</option>
+                            <option value="Mercedes China Lease">Mercedes China Lease</option>
+                            <option value="Mercedes China Retail">Mercedes China Retail</option>
+                            <option value="Mercedes Corporate">Mercedes Corporate</option>
+                            <option value="Mercedes France">Mercedes France</option>
+                            <option value="Mercedes Germany Retail">Mercedes Germany Retail</option>
+                            <option value="Mercedes Italy">Mercedes Italy</option>
+                            <option value="Mercedes Japan">Mercedes Japan</option>
+                            <option value="Mercedes Korea">Mercedes Korea</option>
+                            <option value="Mercedes UK">Mercedes UK</option>
+                            <option value="Mercedes US">Mercedes US</option>
+                            <option value="Mercury Financial / Credit Shop">Mercury Financial / Credit Shop</option>
+                            <option value="Mission Lane">Mission Lane</option>
+                            <option value="NAB CIB">NAB CIB</option>
+                            <option value="NAB Mortgages">NAB Mortgages</option>
+                            <option value="Nationwide">Nationwide</option>
+                            <option value="New Day">New Day</option>
+                            <option value="New Zealand Guardian Trust">New Zealand Guardian Trust</option>
+                            <option value="Nissan China (DNAF)">Nissan China (DNAF)</option>
+                            <option value="OneMain">OneMain</option>
+                            <option value="Pentagon Federal Credit Union">Pentagon Federal Credit Union</option>
+                            <option value="Petros">Petros</option>
+                            <option value="Porsche">Porsche</option>
+                            <option value="RatePay">RatePay</option>
+                            <option value="Santander Germany (SCB)">Santander Germany (SCB)</option>
+                            <option value="Santander Germany HCBE">Santander Germany HCBE</option>
+                            <option value="Santander Portugal">Santander Portugal</option>
+                            <option value="SETF">SETF</option>
+                            <option value="Splitit">Splitit</option>
+                            <option value="SRC">SRC</option>
+                            <option value="Stellantis">Stellantis</option>
+                            <option value="Suncorp">Suncorp</option>
+                            <option value="Synchrony">Synchrony</option>
+                            <option value="T-Mobile">T-Mobile</option>
+                            <option value="Together Money">Together Money</option>
+                            <option value="Toyota Australia">Toyota Australia</option>
+                            <option value="Toyota Canada">Toyota Canada</option>
+                            <option value="Toyota UK">Toyota UK</option>
+                            <option value="Toyota US">Toyota US</option>
+                            <option value="USAA">USAA</option>
+                            <option value="Verizon">Verizon</option>
+                            <option value="Volvo US">Volvo US</option>
+                            <option value="VW China Lease">VW China Lease</option>
+                            <option value="VW China Loan">VW China Loan</option>
+                            <option value="VW Global">VW Global</option>
+                            <option value="VW US">VW US</option>
+                            <option value="Wells Fargo">Wells Fargo</option>
+                            <option value="Wheels/Donlen">Wheels/Donlen</option>
+                            <option value="Wilmington Trust">Wilmington Trust</option>
+                            <option value="Yorkshire">Yorkshire</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Date *</label>
+                        <input type="date" id="date">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (minutes) *</label>
+                        <input type="number" id="duration" min="1" placeholder="e.g., 30">
+                    </div>
+                    <div class="form-group">
+                        <label>Ticket Number</label>
+                        <input type="text" id="ticketNumber" placeholder="e.g., AS-1234">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label>Topic Discussed *</label>
+                    <textarea id="topicDiscussed" placeholder="Brief description of the call topic"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="addEntry()">➕ Add Entry</button>
+            </div>
+
+            <!-- Statistics Section -->
+            <div class="section">
+                <h2 class="section-title">Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>Total Calls</h3>
+                        <div class="value" id="totalCalls">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Hours</h3>
+                        <div class="value" id="totalHours">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Unique Clients</h3>
+                        <div class="value" id="uniqueClients">-</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Unique Developers</h3>
+                        <div class="value" id="uniqueDevelopers">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Actions Section -->
+            <div class="section">
+                <h2 class="section-title">Filters & Actions</h2>
+                <div class="filters">
+                    <div class="form-group">
+                        <label>Filter by Client</label>
+                        <select id="filterClient" onchange="applyFilters()">
+                            <option value="">All Clients</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Filter by Developer</label>
+                        <select id="filterDeveloper" onchange="applyFilters()">
+                            <option value="">All Developers</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Filter by Month</label>
+                        <input type="month" id="filterMonth" onchange="applyFilters()">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="exportToCSV()">📥 Export to CSV</button>
+                    <button class="btn btn-secondary" onclick="refreshData()">🔄 Refresh Data</button>
+                </div>
+            </div>
+
+            <!-- Filtered Statistics -->
+            <div id="filteredStats" style="display:none;" class="section">
+                <div class="alert alert-info" id="filteredStatsContent"></div>
+            </div>
+
+            <!-- Pivot Table Section -->
+            <div class="section">
+                <h2 class="section-title">Developer Time Analysis</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Developer</th>
+                                <th>Total Calls</th>
+                                <th>Total Hours</th>
+                                <th>Client Breakdown</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pivotTable">
+                            <tr>
+                                <td colspan="4" class="loading">Loading data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Detailed Records Section -->
+            <div class="section">
+                <h2 class="section-title">
+                    Detailed Call Records
+                    <button class="btn btn-secondary" onclick="toggleDetails()" style="float: right; padding: 6px 12px; font-size: 12px;">
+                        <span id="toggleText">Show Details</span>
+                    </button>
+                </h2>
+                <div id="detailsSection" style="display: none;">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Developer</th>
+                                    <th>Client</th>
+                                    <th>Duration (min)</th>
+                                    <th>Topic</th>
+                                    <th>Ticket #</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recordsTable">
+                                <tr>
+                                    <td colspan="7" class="loading">Loading records...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('date').valueAsDate = new Date();
+            loadData();
+        });
+
+        // Load all data
+        async function loadData() {
+            await Promise.all([
+                loadRecords(),
+                loadStatistics(),
+                loadFilters()
+            ]);
+        }
+
+        // Load records
+        async function loadRecords() {
+            try {
+                const params = new URLSearchParams();
+                const client = document.getElementById('filterClient').value;
+                const developer = document.getElementById('filterDeveloper').value;
+                const month = document.getElementById('filterMonth').value;
+
+                if (client) params.append('client', client);
+                if (developer) params.append('developer', developer);
+                if (month) params.append('month', month);
+
+                const response = await fetch(`${API_URL}/records?${params}`);
+                const records = await response.json();
+                renderPivotTable(records);
+                renderTable(records);
+                updateFilteredStats(records, client, developer, month);
+            } catch (error) {
+                console.error('Error loading records:', error);
+                showError('Failed to load records');
+            }
+        }
+
+        // Toggle details section
+        function toggleDetails() {
+            const section = document.getElementById('detailsSection');
+            const toggleText = document.getElementById('toggleText');
+            
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                toggleText.textContent = 'Hide Details';
+            } else {
+                section.style.display = 'none';
+                toggleText.textContent = 'Show Details';
+            }
+        }
+
+        // Render pivot table
+        function renderPivotTable(records) {
+            const tbody = document.getElementById('pivotTable');
+
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No records found.</td></tr>';
+                return;
+            }
+
+            // Group by developer
+            const developerData = {};
+            
+            records.forEach(record => {
+                if (!developerData[record.developer_name]) {
+                    developerData[record.developer_name] = {
+                        totalCalls: 0,
+                        totalMinutes: 0,
+                        clients: {}
+                    };
+                }
+
+                developerData[record.developer_name].totalCalls++;
+                developerData[record.developer_name].totalMinutes += record.duration_minutes;
+
+                if (!developerData[record.developer_name].clients[record.client_name]) {
+                    developerData[record.developer_name].clients[record.client_name] = {
+                        calls: 0,
+                        minutes: 0
+                    };
+                }
+
+                developerData[record.developer_name].clients[record.client_name].calls++;
+                developerData[record.developer_name].clients[record.client_name].minutes += record.duration_minutes;
+            });
+
+            // Sort developers alphabetically
+            const sortedDevelopers = Object.keys(developerData).sort();
+
+            // Build table HTML
+            tbody.innerHTML = sortedDevelopers.map((developer, index) => {
+                const data = developerData[developer];
+                const totalHours = (data.totalMinutes / 60).toFixed(1);
+
+                // Sort clients by time (descending)
+                const sortedClients = Object.entries(data.clients)
+                    .sort((a, b) => b[1].minutes - a[1].minutes);
+
+                const clientBadges = sortedClients.map(([client, clientData]) => {
+                    const hours = (clientData.minutes / 60).toFixed(1);
+                    return `
+                        <div class="client-badge">
+                            <span class="client-name">${client}</span>
+                            <span class="client-time">${hours}h (${clientData.calls} calls)</span>
+                        </div>
+                    `;
+                }).join('');
+
+                const rowBg = index % 2 === 0 ? '#ffffff' : '#f9f9f9';
+
+                return `
+                    <tr class="pivot-row" style="background: ${rowBg};">
+                        <td><strong>${developer}</strong></td>
+                        <td class="pivot-total">${data.totalCalls}</td>
+                        <td class="pivot-total">${totalHours}</td>
+                        <td>
+                            <div class="client-breakdown">
+                                ${clientBadges}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const params = new URLSearchParams();
+                const client = document.getElementById('filterClient').value;
+                const developer = document.getElementById('filterDeveloper').value;
+                const month = document.getElementById('filterMonth').value;
+
+                if (client) params.append('client', client);
+                if (developer) params.append('developer', developer);
+                if (month) params.append('month', month);
+
+                const response = await fetch(`${API_URL}/stats?${params}`);
+                const stats = await response.json();
+
+                document.getElementById('totalCalls').textContent = stats.total_calls || 0;
+                document.getElementById('totalHours').textContent = stats.total_hours || '0.0';
+                document.getElementById('uniqueClients').textContent = stats.unique_clients || 0;
+                document.getElementById('uniqueDevelopers').textContent = stats.unique_developers || 0;
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        // Load filters
+        async function loadFilters() {
+            try {
+                const [clientsRes, developersRes] = await Promise.all([
+                    fetch(`${API_URL}/clients`),
+                    fetch(`${API_URL}/developers`)
+                ]);
+
+                const clients = await clientsRes.json();
+                const developers = await developersRes.json();
+
+                // Update filter dropdowns (both client and developer are hardcoded in form, but dynamic in filters)
+                updateFilterDropdown('filterClient', clients);
+                updateFilterDropdown('filterDeveloper', developers);
+            } catch (error) {
+                console.error('Error loading filters:', error);
+            }
+        }
+
+        // Update filter dropdown
+        function updateFilterDropdown(id, items) {
+            const select = document.getElementById(id);
+            const currentValue = select.value;
+            const label = id === 'filterClient' ? 'All Clients' : 'All Developers';
+            
+            select.innerHTML = `<option value="">${label}</option>`;
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item;
+                option.textContent = item;
+                select.appendChild(option);
+            });
+
+            select.value = currentValue;
+        }
+
+        // Update datalist
+        function updateDatalist(id, items) {
+            const datalist = document.getElementById(id);
+            if (datalist) {
+                datalist.innerHTML = '';
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item;
+                    datalist.appendChild(option);
+                });
+            }
+        }
+
+        // Add new entry
+        async function addEntry() {
+            const developer = document.getElementById('developerName').value.trim();
+            const client = document.getElementById('clientName').value.trim();
+            const date = document.getElementById('date').value;
+            const duration = parseInt(document.getElementById('duration').value);
+            const topic = document.getElementById('topicDiscussed').value.trim();
+            const ticket = document.getElementById('ticketNumber').value.trim();
+
+            if (!developer || !client || !date || !duration || !topic) {
+                alert('Please fill in all required fields (*)');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/records`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        developer_name: developer,
+                        client_name: client,
+                        call_date: date,
+                        duration_minutes: duration,
+                        topic_discussed: topic,
+                        ticket_number: ticket || null
+                    })
+                });
+
+                if (response.ok) {
+                    showSuccess('✓ Entry added successfully!');
+                    clearForm();
+                    await loadData();
+                } else {
+                    const error = await response.json();
+                    showError(error.error || 'Failed to add entry');
+                }
+            } catch (error) {
+                console.error('Error adding entry:', error);
+                showError('Failed to add entry');
+            }
+        }
+
+        // Delete entry
+        async function deleteEntry(id) {
+            if (!confirm('Are you sure you want to delete this entry?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/records/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showSuccess('✓ Entry deleted successfully!');
+                    await loadData();
+                } else {
+                    showError('Failed to delete entry');
+                }
+            } catch (error) {
+                console.error('Error deleting entry:', error);
+                showError('Failed to delete entry');
+            }
+        }
+
+        // Apply filters
+        async function applyFilters() {
+            await loadRecords();
+            await loadStatistics();
+        }
+
+        // Update filtered statistics
+        function updateFilteredStats(records, client, developer, month) {
+            const statsDiv = document.getElementById('filteredStats');
+            const statsContent = document.getElementById('filteredStatsContent');
+
+            if (!client && !developer && !month) {
+                statsDiv.style.display = 'none';
+                return;
+            }
+
+            statsDiv.style.display = 'block';
+            const totalMinutes = records.reduce((sum, r) => sum + r.duration_minutes, 0);
+            const totalHours = (totalMinutes / 60).toFixed(1);
+
+            let message = `📊 Filtered Results: ${records.length} calls, ${totalHours} hours (${totalMinutes} minutes)`;
+            
+            if (client) message += ` | Client: ${client}`;
+            if (developer) message += ` | Developer: ${developer}`;
+            if (month) {
+                const [year, monthNum] = month.split('-');
+                const monthName = new Date(year, monthNum - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+                message += ` | Month: ${monthName}`;
+            }
+
+            statsContent.textContent = message;
+        }
+
+        // Render table
+        function renderTable(records) {
+            const tbody = document.getElementById('recordsTable');
+
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No records found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = records.map(record => `
+                <tr>
+                    <td>${new Date(record.call_date).toLocaleDateString()}</td>
+                    <td>${record.developer_name}</td>
+                    <td>${record.client_name}</td>
+                    <td>${record.duration_minutes}</td>
+                    <td>${record.topic_discussed}</td>
+                    <td>${record.ticket_number || '-'}</td>
+                    <td><button class="action-btn" onclick="deleteEntry(${record.id})">Delete</button></td>
+                </tr>
+            `).join('');
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            window.location.href = `${API_URL}/export/csv`;
+        }
+
+        // Refresh data
+        async function refreshData() {
+            await loadData();
+            showSuccess('✓ Data refreshed!');
+        }
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('developerName').value = '';
+            document.getElementById('clientName').value = '';
+            document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('duration').value = '';
+            document.getElementById('topicDiscussed').value = '';
+            document.getElementById('ticketNumber').value = '';
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            showAlert(message, 'alert-success');
+        }
+
+        // Show error message
+        function showError(message) {
+            showAlert(message, 'alert-error');
+        }
+
+        // Show alert
+        function showAlert(message, className) {
+            const alert = document.createElement('div');
+            alert.className = `alert ${className}`;
+            alert.textContent = message;
+            document.querySelector('.content').insertBefore(alert, document.querySelector('.section'));
+            setTimeout(() => alert.remove(), 3000);
+        }
+    </script>
+</body>
+</html>
+

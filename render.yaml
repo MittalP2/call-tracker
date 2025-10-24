@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: call-tracker
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+
